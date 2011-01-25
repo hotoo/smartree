@@ -1,0 +1,92 @@
+
+div.smartree{}
+div.smartree ul{
+    list-style-type:none;
+    margin:0; padding:0;
+}
+div.smartree li{
+    list-style-type:none;
+    margin:0 0 0 18px; padding:0;
+    background:transparent url(smartree.png) repeat-y -72px 0;
+    white-space:nowrap;
+}
+
+/* the root nodes. */
+div.smartree>ul>li{margin-left:0;}
+div.smartree li.root{margin-left:0;} /* hacks for ie6 */
+
+/* the last node of current level. */
+div.smartree li:last-child{background-position:-100px 0;}
+div.smartree li.last{background-position:-100px 0;}
+/*hacks for ie6*/
+div.smartree li.last ins.last{
+    _background-position:-54px 0;
+}
+
+div.smartree li ins{
+    display:inline-block;
+    width:16px; height:16px; font-size:16px; line-height:16px;
+    overflow:hidden;
+    background:transparent url(smartree.png) no-repeat;
+    cursor:pointer;
+    vertical-align:middle;
+}
+div.smartree li>ins{
+    height:18px!important; width:18px!important;
+}
+
+div.smartree a{
+    color:#333; text-decoration:none; font-size:12px; line-height:16px;
+    height:16px;
+    border:1px solid transparent; *border-color:#f6f6f6;
+    display:inline-block; vertical-align:middle;
+    margin:0; padding:0;
+    white-space:nowrap;
+    -moz-border-radius:2px; -khtml-border-radius:2px; -webkit-border-radius:2px; border-radius:2px;
+}
+div.smartree a:hover{background-color:#C8E6FF; color:#000; border-color:#ABDAFF;}
+/*div.smartree a:focus, [DISTURB]这个样式会影响到当树支持 CtrlKey/ShiftKey 时，取消节点选中的情况。 */
+div.smartree a.focus{background-color:#4DB1FF; color:#fff; border-color:#3AA8FF;}
+
+div.smartree li a ins{background-position:-54px -36px!important; cursor:default;}
+
+div.smartree li:last-child > ins{background-position:-54px 0;}
+div.smartree li.last > ins{background-position:-54px 0;}
+
+/* expand bar. */
+div.smartree li > ins{background-position:-36px 0; cursor:default;} /* none */
+div.smartree li ins{background-position:-36px 0; cursor:default;} /* hacks for ie6. */
+div.smartree li.expand > ins{background-position:-18px 0; cursor:pointer;} /* expand. */
+div.smartree li.expand ins.expand{background-position:-18px 0; cursor:pointer;} /* hacks for ie6. */
+div.smartree li.fold > ins{background-position:0 0; cursor:pointer;} /* fold. */
+div.smartree li.fold ins.fold{background-position:0 0; cursor:pointer;} /* hacks for ie6. */
+
+/* for last-child node. */
+div.smartree li.expand.last > ins,
+div.smartree li.expand-last > ins{
+    background-position:-36px -18px;
+}
+div.smartree li.fold.last > ins,
+div.smartree li.fold-last > ins{
+    background-position:-54px -18px;
+}
+div.smartree li ins.checkbox{
+    background-position:0 -36px!important;
+    _background-position:0 -38px;
+    cursor:pointer;
+}
+div.smartree li ins.checked{
+    background-position:-37px -36px!important;
+    _background-position:-37px -38px;
+}
+
+/* default node type is folder, for node type[folder/file/...]. */
+div.smartree li        > a > ins,
+div.smartree li.folder > a > ins{background-position:0 -20px!important;}
+div.smartree li a ins.folder{_background-position:0 -20px!important;}
+div.smartree li.file   > a > ins{background-position:-20px -20px!important;} /* node type is file, for expand bar. */
+div.smartree li a ins.file{_background-position:-20px -20px!important;} /*hacks for ie6.*/
+
+/* fold/expand child nodes. */
+div.smartree li.fold > ul{ display:none; }
+div.smartree li.expand > ul{ display:block; }
