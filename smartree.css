@@ -64,11 +64,11 @@ div.smartree li.fold ins.fold{background-position:0 0; cursor:pointer;} /* hacks
 /* for last-child node. */
 div.smartree li.expand.last > ins,
 div.smartree li.expand-last > ins{
-    background-position:-36px -18px;
+    background-position:-54px -18px;
 }
 div.smartree li.fold.last > ins,
 div.smartree li.fold-last > ins{
-    background-position:-54px -18px;
+    background-position:-36px -18px;
 }
 div.smartree li ins.checkbox{
     background-position:0 -36px!important;
