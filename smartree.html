@@ -151,10 +151,10 @@ checkbox:
 	</ul>
 </div>
 
-<div id="t0"></div>
+<div id="t0" class="smartree"></div>
 
-<!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>-->
-<script type="text/javascript" src="jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+<!--<script type="text/javascript" src="jquery-1.3.2.min.js"></script>-->
 <script type="text/javascript" src="smartree.js"></script>
 <script type="text/javascript">/*<![CDATA[*/
     var nodes = [];
@@ -164,8 +164,7 @@ checkbox:
     window.onload = function(){
         new Smartree(document.getElementById("demo"));
         var t0 = new Smartree(nodes, 0);
-        alert(t0)
-        document.getElementById("t0").innerHTML = t0.toString();
+        document.getElementById("t0").appendChild(t0);
     };
 //    $(function(){
 //        //$("#demo").smartree();
