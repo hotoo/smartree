@@ -3,7 +3,7 @@
 <head>
 <meta name="keywords" content="" />
 <meta name="description" content="" />
-<meta http-equiv="Content-Type" content="text/html; charset=gbk" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="icon" href="favicon.ico" type="image/x-icon" />
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 <title>smartree</title>
@@ -151,19 +151,32 @@ checkbox:
 	</ul>
 </div>
 
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+<div id="t0"></div>
+
+<!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>-->
+<script type="text/javascript" src="jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="smartree.js"></script>
 <script type="text/javascript">/*<![CDATA[*/
-    $(function(){
-        //$("#demo").smartree();
-        $("#demo").smartree();
-        $("#demo-checkbox").smartree({
-            checkbox:{
-                linkage:"none",
-                defalutChecked:false
-            }
-        });
-    });
+    var nodes = [];
+    nodes[0] = {"pid":"0", "id":"1", "text":"Node 1"}
+    nodes[1] = {"pid":"1", "id":"2", "text":"Node 2"}
+    nodes[2] = {"pid":"0", "id":"3", "text":"Node 3"}
+    window.onload = function(){
+        new Smartree(document.getElementById("demo"));
+        var t0 = new Smartree(nodes, 0);
+        alert(t0)
+        document.getElementById("t0").innerHTML = t0.toString();
+    };
+//    $(function(){
+//        //$("#demo").smartree();
+//        $("#demo").smartree();
+//        $("#demo-checkbox").smartree({
+//            checkbox:{
+//                linkage:"none",
+//                defalutChecked:false
+//            }
+//        });
+//    });
 /*]]>*/</script>
 
 </body>
