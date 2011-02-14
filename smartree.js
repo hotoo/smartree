@@ -162,22 +162,33 @@ var Smartree = (function(){
     var Node = function(){
         this.parent = null;
         this.children = null;
-        this.text = "";
-        this.title = "";
-        this.uri = "javascript:void(0);";
-        this.target = "_this";
-        this.handler = null;
-        this.isLast = false;
+        this.text = "";                     // node link's display name.
+        this.title = "";                    // link's title attribute.
+        this.uri = "javascript:void(0);";   // link's href attribute.
+        this.target = "_this";              // link's target attribute.
+        this.handler = null;                // expand & fold bar.
+        // READ_ONLY.
+        this.isLast = false;                // is the last node of tree.
+        this.expanded = false;              // node status is expanded.
     };
     Node.prototype.expand = function(){
         D.addClass(this._elem, "expand");
         if(!this.children){return;}
         this.children.expand();
+        this.expanded = true;
     };
     Node.prototype.fold = function(){
         D.addClass(this._elem, "fold");
         if(!this.children){return;}
         this.children.fold();
+        this.expanded = false;
+    };
+    Node.prototype.toggle = function(){
+        if(this.expanded){
+            this.fold();
+        }else{
+            this.expand();
+        }
     };
     Node.prototype.hasChild = function(){
         return !!this.children;
@@ -188,6 +199,12 @@ var Smartree = (function(){
             this.children = new Tree();
         }
         this.children.push(node);
+    };
+    Node.prototype.focus = function(){
+        D.addClass(this._achor, "focus");
+    };
+    Node.prototype.blur = function(){
+        D.removeClass(this.achor, "focus");
     };
     /*
      *
@@ -203,17 +220,26 @@ var Smartree = (function(){
         var node = document.createElement("li");
         var bar = document.createElement("ins");
         var link = document.createElement("a");
+        link.href = this.uri;
         var icon = document.createElement("ins");
         var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
         link.appendChild(icon);
         link.appendChild(text);
-        if(this.hasChild){
+
+        this._elem = node;
+        this._expandHandle = bar;
+        this._achor = link;
+        this._nodeTypeIcon = icon;
+
+        E.add(link, "click", F.createDelegate(this, this.focus));
+
+        if(this.hasChild()){
             D.addClass(node, "fold");
 
-            var _expand = F.createDelegate(this, this.expand);
-            E.add(bar, "click", _expand);
+            var _toggle = F.createDelegate(this, this.toggle);
+            E.add(bar, "click", _toggle);
 
             node.appendChild(this.children.valueOf());
         }
@@ -230,15 +256,26 @@ var Smartree = (function(){
 
     // 树代表 ul 元素。
     var Tree = function(container){
+        this._elem = null;
         this.nodes = [];
+        this.expanded = false;
     };
     Tree.prototype.expand = function(){
         // hacks for IE6.
         this._elem.style.display = "block";
+        this.expanded = true;
     };
     Tree.prototype.fold = function(){
         // hacks for IE6.
         this._elem.style.display = "none";
+        this.expanded = false;
+    };
+    Tree.prototype.toggle = function(){
+        if(this.expanded){
+            this.fold();
+        }else{
+            this.expand();
+        }
     };
     Tree.prototype.valueOf = function(){
         if(0 == this.nodes.length){
@@ -248,6 +285,7 @@ var Smartree = (function(){
         for(var i=0,l=this.nodes.length; i<l; i++){
             tree.appendChild(this.nodes[i].valueOf());
         }
+        this._elem = tree;
         return tree;
     };
     Tree.prototype.toString = function(){
@@ -260,7 +298,9 @@ var Smartree = (function(){
         return '<ul>'+s+'</ul>';
     };
     Tree.prototype.add = function(node){
-        this.nodes[this.nodes.length-1].isLast = false;
+        if(0 < this.nodes.length){
+            this.nodes[this.nodes.length-1].isLast = false;
+        }
         node.isLast = true;
         this.nodes.push(node);
     };
@@ -278,7 +318,7 @@ var Smartree = (function(){
             cache[pid].push(arr[i]);
         }
 
-        var root = document.createElement("ul");
+        var root = new Tree();
         var node = cache[rootId];
 
         /*
@@ -288,77 +328,19 @@ var Smartree = (function(){
          */
         function deep(items, tree){
             if(!items || items.length<1){return;}
-            for(var i=0,item,insExpandBar,achor,insNodeType,l=items.length; i<l; i++){
-                item = document.createElement('li');
-                //item.id = prefix + items[i].id;
-                //t = items[i].isFolder==1?"folder":"file";
-                var cls = [];
-                if(cache[items[i].id] && cache[items[i].id].length>0){
-                    cls.push("fold")
-                }
-                if(i+1 == l){
-                    cls.push("last");
-                }
-                item.className = cls.join(" ");
-
-                insExpandBar = document.createElement("ins");
-                item.appendChild(insExpandBar);
-
-                achor = document.createElement("a");
-                achor.setAttribute("href", items[i].url||"javascript:void(0);")
-                item.appendChild(achor);
-
-                insNodeType = document.createElement("ins");
-                //insNodeType.className = t;
-                //insNodeType.appendChild(document.createTextNode(' '));
-                achor.appendChild(insNodeType);
-
-                achor.appendChild(document.createTextNode(items[i].text))
-
-                tree.appendChild(item);
+            for(var i=0,node,insExpandBar,achor,insNodeType,l=items.length; i<l; i++){
+                node = new Node();
+                node.text = items[i].text;
+                node.uri = items[i].url || "javascript:void(0);";
+                tree.add(node);
 
                 if(cache[items[i].id] && cache[items[i].id].length>0){
-                    var subtree = document.createElement("ul");
-                    item.appendChild(subtree);
-                    deep(cache[items[i].id], subtree);
+                    node.children = new Tree();
+                    deep(cache[items[i].id], node.children);
                 }
             }
         }
         deep(cache[rootId], root);
-        return root;
-
-        // TODO: 将上面的递归改成循环的实现。
-        var root = tree = new Tree();
-        var nodeId = rootId;
-        var node;
-        var cacheT = {};
-        do{
-            var nodes = cache[nodeId];
-                    //alert(nodes[1].id)
-            if(!nodes){
-                if(node && node.pid){
-                    //TODO:
-                    nodeId = node.pid;
-                    //tree = cacheT[nodeId];
-                    continue;
-                }else{
-                    break;
-                }
-            }
-            for(var i=0,l=nodes.length; i<l; i++){
-                node = new Node();
-                node.id = nodes[i].id;
-                node.pid = nodes[i].pid;
-                node.uri = nodes[i].uri || "javascript:void(0);";
-                node.text = nodes[i].text || "(empty)";
-                node.title = nodes[i].title || "";
-                node.target = nodes[i].target || "_this";
-                node.handler = nodes[i].handler;
-
-                tree.add(node);
-                nodeId = node.id;
-            }
-        }while(cache[nodeId]);
         return root;
     }
     function parseDOM(container){
