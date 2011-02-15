@@ -159,8 +159,20 @@ checkbox:
 <script type="text/javascript">/*<![CDATA[*/
     var nodes = [];
     nodes[0] = {"pid":"0", "id":"1", "text":"Node 1"}
-    nodes[1] = {"pid":"1", "id":"2", "text":"Node 2"}
+    nodes[1] = {"pid":"0", "id":"2", "text":"Node 2"}
     nodes[2] = {"pid":"0", "id":"3", "text":"Node 3"}
+    nodes[3] = {"pid":"0", "id":"4", "text":"Node 4"}
+    nodes[4] = {"pid":"0", "id":"5", "text":"Node 5"}
+    nodes[5] = {"pid":"0", "id":"6", "text":"Node 6"}
+    nodes[6] = {"pid":"0", "id":"7", "text":"Node 7"}
+    nodes[7] = {"pid":"0", "id":"8", "text":"Node 8"}
+    nodes[8] = {"pid":"0", "id":"9", "text":"Node 9"}
+    nodes[9] = {"pid":"0", "id":"10", "text":"Node 10"}
+    var tot=10240, cns=10;
+    for (i=10; i<tot; i++){
+        //tree.nodes[Math.floor(Math.random()*(tot/cns))+2 +"_"+ i] = 'text:节点 '+ i;
+        nodes[i] = {"pid":Math.floor(Math.random()*(tot/cns))+2, "id":i, "text":"Node "+i};
+    }
     window.onload = function(){
         new Smartree(document.getElementById("demo"));
         var t0 = new Smartree(nodes, 0);

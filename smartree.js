@@ -31,7 +31,7 @@ var Smartree = (function(){
             if(!elem || !D.hasClass(elem, cls)){return;}
             var c=elem.className, a=c.split(" "), n=[];
             for(var i=a.length-1; i>-1; i--){
-                if(cls==a[i]){n[n.length]=a[i];}
+                if(cls!=a[i]){n[n.length]=a[i];}
             }
             elem.className = n.join(" ");
         },
@@ -172,12 +172,14 @@ var Smartree = (function(){
         this.expanded = false;              // node status is expanded.
     };
     Node.prototype.expand = function(){
+        D.removeClass(this._elem, "fold");
         D.addClass(this._elem, "expand");
         if(!this.children){return;}
         this.children.expand();
         this.expanded = true;
     };
     Node.prototype.fold = function(){
+        D.removeClass(this._elem, "expand");
         D.addClass(this._elem, "fold");
         if(!this.children){return;}
         this.children.fold();
@@ -194,17 +196,49 @@ var Smartree = (function(){
         return !!this.children;
     };
     Node.prototype.addChild = function(node){
-        node.parent = this;
         if(!this.children){
             this.children = new Tree();
+            this.children.parent = this;
         }
-        this.children.push(node);
+        this.children.add(node);
     };
     Node.prototype.focus = function(){
         D.addClass(this._achor, "focus");
     };
     Node.prototype.blur = function(){
-        D.removeClass(this.achor, "focus");
+        D.removeClass(this._achor, "focus");
+    };
+    Node.prototype.focused = function(){
+        return D.hasClass(this._achor, "focus");
+    };
+    Node.prototype.root = function(){
+        return this.parent.root();
+    };
+    Node.prototype._clickAchor = function(evt){
+        evt = window.event || evt;
+        var ctrl = evt.ctrlKey;
+        if(!ctrl){
+            var focused = this.root().focusedNodes;
+            for(var i=0,l=focused.length; i<l; i++){
+                focused[i].blur();
+            }
+            this.root().blurAll();
+            this.focus();
+            this.root().addFocusNode(this);
+        }else{
+            if(this.focused()){
+                this.blur();
+                this.root().removeFocusNode(this);
+            }else{
+                this.focus();
+                this.root().addFocusNode(this);
+            }
+            E.stop(evt);
+            return false;
+        }
+    };
+    Node.prototype.text = function(){
+        return this._text.nodeValue;
     };
     /*
      *
@@ -218,6 +252,7 @@ var Smartree = (function(){
      */
     Node.prototype.valueOf = function(){
         var node = document.createElement("li");
+        if(this.isLast){D.addClass(node, "last");}
         var bar = document.createElement("ins");
         var link = document.createElement("a");
         link.href = this.uri;
@@ -232,8 +267,9 @@ var Smartree = (function(){
         this._expandHandle = bar;
         this._achor = link;
         this._nodeTypeIcon = icon;
+        this._text = text;
 
-        E.add(link, "click", F.createDelegate(this, this.focus));
+        E.add(link, "click", F.createDelegate(this, this._clickAchor));
 
         if(this.hasChild()){
             D.addClass(node, "fold");
@@ -256,9 +292,23 @@ var Smartree = (function(){
 
     // 树代表 ul 元素。
     var Tree = function(container){
+        this.parent = null;
         this._elem = null;
         this.nodes = [];
         this.expanded = false;
+    };
+    Tree.prototype.root = function(){
+        var root = this;
+        // FIXME: return node.
+        //while(root.parent && root.parent.parent){
+        //    root = root.parent.parent;
+            //          |         +-- Tree<ul>.
+            //          +-- Node<li>.
+        //}
+        while(!!root.parent){
+            root = root.parent;
+        }
+        return root;
     };
     Tree.prototype.expand = function(){
         // hacks for IE6.
@@ -302,10 +352,49 @@ var Smartree = (function(){
             this.nodes[this.nodes.length-1].isLast = false;
         }
         node.isLast = true;
+        node.parent = this;
         this.nodes.push(node);
     };
     Tree.prototype.remove = function(node){};
     Tree.prototype.filter = function(){
+    };
+
+    // ROOT Tree.
+    var Root = function(){
+        this.focusedNodes = [];
+    };
+    Root.prototype = new Tree();
+    Root.prototype.constructor = Root;
+    /**
+     * Add focused node to tree cache.
+     * @param {Node} node, target node.
+     */
+    Root.prototype.addFocusNode = function(node){
+        for(var i=0,l=this.focusedNodes.length; i<l; i++){
+            if(node == this.focusedNodes[i]){
+                return;
+            }
+        }
+        this.focusedNodes.push(node);
+    };
+    /**
+     * Remove focused node from tree cache.
+     * @param {Node} node, target node.
+     */
+    Root.prototype.removeFocusNode = function(node){
+        for(var i=0,l=this.focusedNodes.length; i<l; i++){
+            if(node == this.focusedNodes[i]){
+                this.focusedNodes.splice(i, 1);
+                return;
+            }
+        }
+    };
+    Root.prototype.blurAll = function(){
+        var l=this.focusedNodes.length
+        for(var i=0; i<l; i++){
+            this.focusedNodes[i].blur();
+        }
+        this.focusedNodes.splice(0, l);
     };
 
     // TODO:
@@ -318,7 +407,7 @@ var Smartree = (function(){
             cache[pid].push(arr[i]);
         }
 
-        var root = new Tree();
+        var root = new Root();
         var node = cache[rootId];
 
         /*
@@ -335,8 +424,9 @@ var Smartree = (function(){
                 tree.add(node);
 
                 if(cache[items[i].id] && cache[items[i].id].length>0){
-                    node.children = new Tree();
-                    deep(cache[items[i].id], node.children);
+                    var subtree = new Tree();
+                    node.addChild(subtree);
+                    deep(cache[items[i].id], subtree);
                 }
             }
         }
