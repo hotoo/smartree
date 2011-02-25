@@ -151,6 +151,11 @@ var Smartree = (function(){
             }
         }
     };
+    var AJAX = {
+        sent : function(){},
+        get:function(){},
+        post:function(){}
+    };
 
     /**
      * 树包含 0 或多个节点，
@@ -454,7 +459,17 @@ var Smartree = (function(){
             D.prepend(links[i], document.createElement('ins'));
         }
     };
-    function Smartree(){
+    /**
+     * TODO:
+     * datas 和 dom 参数最好只有其中一个属性。
+     *  options:{
+     *      datas:[],
+     *      dom:document.getElementById("tree"),
+     *      lazyload:true,
+     *      datasrc:"datas.json"
+     *  }
+     */
+    function Smartree(options){
         if(arguments[0] instanceof Array){
             return parseArray(arguments[0], arguments[1]);
         }else{
