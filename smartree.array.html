@@ -24,10 +24,12 @@ div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding
             <input type="submit" value="确定" />
         </form>
     </div>
+    <div>
+        <button type="button" id="btn-getpath">getPath()</button>
+    </div>
+    <div id="debug"></div>
     <div id="demo" class="smartree"></div>
 
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-<!--<script type="text/javascript" src="jquery-1.3.2.min.js"></script>-->
 <script type="text/javascript" src="smartree.js"></script>
 <script type="text/javascript">/*<![CDATA[*/
 
@@ -56,9 +58,15 @@ div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding
         nodes[i] = {"pid":Math.floor(Math.random()*(tot/cns))+1, "id":i, "text":"Node "+i};
     }
 
+    function $(id){
+        return document.getElementById(id);
+    }
     window.onload = function(){
         var tree = new Smartree(nodes, 0);
         document.getElementById("demo").appendChild(tree.valueOf());
+        $("btn-getpath").onclick = function(){
+            $("debug").innerHTML = tree.getFocusedPath().join("<br />");
+        };
     };
 //    $(function(){
 //        //$("#demo").smartree();

@@ -152,7 +152,7 @@ var Smartree = (function(){
         }
     };
     var AJAX = {
-        sent : function(){},
+        sent : function(url, type, data, callback){},
         get:function(){},
         post:function(){}
     };
@@ -222,6 +222,23 @@ var Smartree = (function(){
     Node.prototype.root = function(){
         return this.parent.root();
     };
+    Node.prototype.getPath = function(sep){
+        if(!sep){sep = "/";}
+        var path = "";
+        var node = this;
+        do{
+            path = node.text + sep + path;
+            node = node.parent.parent;
+            //          |         +-- Tree<ul>.
+            //          +-- Node<li>.
+        }while(node);
+        return path;
+    };
+    Node.prototype._mousedown = function(evt){
+        evt = window.event || evt;
+        E.stop(evt);
+        return false;
+    };
     Node.prototype._clickAchor = function(evt){
         evt = window.event || evt;
         var ctrl = evt.ctrlKey;
@@ -277,6 +294,7 @@ var Smartree = (function(){
         this._nodeTypeIcon = icon;
         this._text = text;
 
+        E.add(link, "mousedown", F.createDelegate(this, this._mousedown));
         E.add(link, "click", F.createDelegate(this, this._clickAchor));
 
         if(this.hasChild()){
@@ -419,6 +437,16 @@ var Smartree = (function(){
         }
         this.focusedNodes.push(node);
     };
+    Root.prototype.getFocusedNodes = function(){
+        return this.focusedNodes;
+    };
+    Root.prototype.getFocusedPath = function(sep){
+        var path = [];
+        for(var i=0,l=this.focusedNodes.length; i<l; i++){
+            path.push(this.focusedNodes[i].getPath(sep));
+        }
+        return path;
+    };
     /**
      * Remove focused node from tree cache.
      * @param {Node} node, target node.
@@ -430,6 +458,12 @@ var Smartree = (function(){
                 return;
             }
         }
+    };
+    /**
+     * @param {Node,String} node, 节点或者节点ID。
+     *
+     */
+    Root.prototype.focus = function(node){
     };
     Root.prototype.blurAll = function(){
         var l=this.focusedNodes.length
