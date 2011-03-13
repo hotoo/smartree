@@ -290,6 +290,7 @@ var Smartree = (function(){
     var Node = function(){
         this.parent = null;
         this.children = null;
+        this.id = "";
         this.text = "";                     // node link's display name.
         this.title = "";                    // link's title attribute.
         this.uri = "javascript:void(0);";   // link's href attribute.
@@ -321,11 +322,13 @@ var Smartree = (function(){
         }
     };
     Node.prototype.hasChild = function(){
-        return !!this.children;
+        var a = this.root().datas_cache[this.id];
+        return !!this.children || (a && a.length);
     };
     Node.prototype.addChild = function(node){
         if(!this.children){
             this.children = new Tree();
+            this.children.id = this.id;
             this.children.parent = this;
         }
         this.children.add(node);
@@ -341,6 +344,23 @@ var Smartree = (function(){
     };
     Node.prototype.root = function(){
         return this.parent.root();
+    };
+    Node.prototype.getPath = function(sep){
+        if(!sep){sep = "/";}
+        var path = "";
+        var node = this;
+        do{
+            path = node.text + sep + path;
+            node = node.parent.parent;
+            //          |         +-- Tree<ul>.
+            //          +-- Node<li>.
+        }while(node);
+        return path;
+    };
+    Node.prototype._mousedown = function(evt){
+        evt = window.event || evt;
+        E.stop(evt);
+        return false;
     };
     Node.prototype._clickAchor = function(evt){
         evt = window.event || evt;
@@ -378,7 +398,7 @@ var Smartree = (function(){
      *   </a>
      * </li>
      */
-    Node.prototype.valueOf = function(){
+    Node.prototype.valueOf = function(sync){
         var node = document.createElement("li");
         if(this.isLast){D.addClass(node, "last");}
         var bar = document.createElement("ins");
@@ -397,15 +417,17 @@ var Smartree = (function(){
         this._nodeTypeIcon = icon;
         this._text = text;
 
+        E.add(link, "mousedown", F.createDelegate(this, this._mousedown));
         E.add(link, "click", F.createDelegate(this, this._clickAchor));
 
         if(this.hasChild()){
             D.addClass(node, "fold");
-
             var _toggle = F.createDelegate(this, this.toggle);
             E.add(bar, "click", _toggle);
-
-            node.appendChild(this.children.valueOf());
+            if(!this.children){
+                this.addChild(new Tree());
+            }
+            node.appendChild(this.children.valueOf(sync));
         }
         return node;
     };
@@ -419,15 +441,19 @@ var Smartree = (function(){
     };
 
     // 树代表 ul 元素。
-    var Tree = function(container){
+    var Tree = function(){
         this.parent = null;
-        this._elem = null;
+        this._elem = document.createElement("ul");
         this.nodes = [];
         this.expanded = false;
+        this._inited = false;           // children nodes make dom finished.
+        this.id;
     };
     Tree.prototype.root = function(){
+        // TODO: simple?
+        //return this.parent.root();
+
         var root = this;
-        // FIXME: return node.
         //while(root.parent && root.parent.parent){
         //    root = root.parent.parent;
             //          |         +-- Tree<ul>.
@@ -441,7 +467,16 @@ var Smartree = (function(){
     Tree.prototype.expand = function(){
         // hacks for IE6.
         this._elem.style.display = "block";
-        this.expanded = true;
+        //DEBUG:
+        //alert(this.nodes[0] instanceof Tree)
+        if(!this._inited){
+            //TODO: sync for dom.
+            this._elem.appendChild(this.getNodesDOM());
+            this._inited = true;
+            this.expanded = true;
+        }else{
+            this.expanded = true;
+        }
     };
     Tree.prototype.fold = function(){
         // hacks for IE6.
@@ -455,16 +490,33 @@ var Smartree = (function(){
             this.expand();
         }
     };
-    Tree.prototype.valueOf = function(){
+    Tree.prototype.getNodesDOM = function(){
+        var frag = document.createDocumentFragment();
+        var datas = this.root().datas_cache[this.id];
+        for(var i=0,l=datas.length,node; i<l; i++){
+            var node = new Node();
+            node.id = datas[i].id;
+            node.text = datas[i].text;
+            node.uri = datas[i].url || "javascript:void(0);";
+            this.add(node);
+            node.isLast = i==l-1;
+            frag.appendChild(node.valueOf(this.root().syncLoad));
+        }
+        //for(var i=0,l=this.nodes.length; i<l; i++){
+            //frag.appendChild(this.nodes[i].valueOf(this.root().syncLoad));
+        //}
+        return frag;
+    };
+    Tree.prototype.valueOf = function(sync){
         if(0 == this.nodes.length){
             return document.createTextNode("");
         }
-        var tree = document.createElement("ul");
-        for(var i=0,l=this.nodes.length; i<l; i++){
-            tree.appendChild(this.nodes[i].valueOf());
+        if(sync){
+            for(var i=0,l=this.nodes.length; i<l; i++){
+                this._elem.appendChild(this.nodes[i].valueOf(sync));
+            }
         }
-        this._elem = tree;
-        return tree;
+        return this._elem;
     };
     Tree.prototype.toString = function(){
         var s = '';
@@ -490,6 +542,9 @@ var Smartree = (function(){
     // ROOT Tree.
     var Root = function(){
         this.focusedNodes = [];
+        this.syncLoad = false;
+        this.datas = null;
+        this.datas_cache = null;
     };
     Root.prototype = new Tree();
     Root.prototype.constructor = Root;
@@ -505,6 +560,16 @@ var Smartree = (function(){
         }
         this.focusedNodes.push(node);
     };
+    Root.prototype.getFocusedNodes = function(){
+        return this.focusedNodes;
+    };
+    Root.prototype.getFocusedPath = function(sep){
+        var path = [];
+        for(var i=0,l=this.focusedNodes.length; i<l; i++){
+            path.push(this.focusedNodes[i].getPath(sep));
+        }
+        return path;
+    };
     /**
      * Remove focused node from tree cache.
      * @param {Node} node, target node.
@@ -517,12 +582,27 @@ var Smartree = (function(){
             }
         }
     };
+    /**
+     * @param {Node,String} node, 节点或者节点ID。
+     *
+     */
+    Root.prototype.focus = function(node){
+    };
     Root.prototype.blurAll = function(){
         var l=this.focusedNodes.length
         for(var i=0; i<l; i++){
             this.focusedNodes[i].blur();
         }
         this.focusedNodes.splice(0, l);
+    };
+    Root.prototype.valueOf = function(){
+        if(0 == this.nodes.length){
+            return document.createTextNode("");
+        }
+        for(var i=0,l=this.nodes.length; i<l; i++){
+            this._elem.appendChild(this.nodes[i].valueOf());
+        }
+        return this._elem;
     };
 
     // TODO:
@@ -536,6 +616,7 @@ var Smartree = (function(){
         }
 
         var root = new Root();
+        root.datas_cache = cache;
         var node = cache[rootId];
 
         /*
@@ -547,6 +628,7 @@ var Smartree = (function(){
             if(!items || items.length<1){return;}
             for(var i=0,node,insExpandBar,achor,insNodeType,l=items.length; i<l; i++){
                 node = new Node();
+                node.id = items[i].id;
                 node.text = items[i].text;
                 node.uri = items[i].url || "javascript:void(0);";
                 tree.add(node);
