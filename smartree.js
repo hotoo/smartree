@@ -152,12 +152,13 @@ var Smartree = (function(){
         }
     };
     /**
-     * 封装的兼容多浏览器的XMLHttpRequest（注意大小写）对象。隐藏了各浏览器间异步&同步方式的差异性。
+     * 封装的兼容多浏览器的XMLHttpRequest（注意大小写）对象。
+     * 隐藏了各浏览器间异步&同步方式的差异性。
      * @usage
-                AJAX.send("data.json","post","",function(st,re){
-                    // st: "ok"/"ing"/"err"
-                    // re: response, re.responseText
-                });
+     *          AJAX.send("data.json","post","",function(st,re){
+     *              // st: "ok"/"ing"/"err"
+     *              // re: response, re.responseText
+     *          });
      * @namespace org.xianyun.net;
      * @constructor XmlHttpRequest(a)
      * @param {Boolean} a 是否使用异步方式。false则为同步，否则异步。
@@ -176,8 +177,11 @@ var Smartree = (function(){
         var r = null;
         if(window.XMLHttpRequest){
             r = new XMLHttpRequest();
+            //如果服务器的响应没有XML mime-type header，
+            //某些Mozilla浏览器可能无法正常工作。
+            //所以需要XmlHttp.overrideMimeType('text/xml'); 来修改该header.
             if (r.overrideMimeType){
-                r.overrideMimeType("text/xml"); //如果服务器的响应没有XML mime-type header，某些Mozilla浏览器可能无法正常工作。 所以需要XmlHttp.overrideMimeType('text/xml');来修改该header.
+                r.overrideMimeType("text/xml");
             }
         } else if(window.ActiveXObject){ // 支持ActiveX的（ie）
             for (var i=Ajax.AXOI, l=Ajax.AXO.length; i<l; i++){
@@ -202,6 +206,9 @@ var Smartree = (function(){
         this.send = function(u, m, p, c){
             d = false;
             var isPost = /^post$/i.test(m);
+            if(!isPost){
+                u = u+"?"+p;
+            }
             r.open(m, u, this.async); // 发送数据（异步）
             if(isPost){ // 提交方法为post时，发送信息头
                 //r.setrequestheader("content-length",(new String(u)).length);
@@ -296,6 +303,7 @@ var Smartree = (function(){
         this.uri = "javascript:void(0);";   // link's href attribute.
         this.target = "_this";              // link's target attribute.
         this.handler = null;                // expand & fold bar.
+        this.type = "folder";
         // READ_ONLY.
         this.isLast = false;                // is the last node of tree.
         this.expanded = false;              // node status is expanded.
@@ -324,6 +332,12 @@ var Smartree = (function(){
     Node.prototype.hasChild = function(){
         var a = this.root().datas_cache[this.id];
         return !!this.children || (a && a.length);
+    };
+    Node.prototype.hasNotChild = function(){
+        E.remove(this._expandHandle, "click", this._toggle);
+        this.children = null;
+        D.removeClass(this._elem, "expand");
+        D.removeClass(this._elem, "fold");
     };
     Node.prototype.addChild = function(node){
         if(!this.children){
@@ -401,6 +415,7 @@ var Smartree = (function(){
     Node.prototype.valueOf = function(sync){
         var node = document.createElement("li");
         if(this.isLast){D.addClass(node, "last");}
+        D.addClass(node, this.type);
         var bar = document.createElement("ins");
         var link = document.createElement("a");
         link.href = this.uri;
@@ -422,8 +437,8 @@ var Smartree = (function(){
 
         if(this.hasChild()){
             D.addClass(node, "fold");
-            var _toggle = F.createDelegate(this, this.toggle);
-            E.add(bar, "click", _toggle);
+            this._toggle = F.createDelegate(this, this.toggle);
+            E.add(bar, "click", this._toggle);
             if(!this.children){
                 this.addChild(new Tree());
             }
@@ -467,13 +482,38 @@ var Smartree = (function(){
     Tree.prototype.expand = function(){
         // hacks for IE6.
         this._elem.style.display = "block";
-        //DEBUG:
-        //alert(this.nodes[0] instanceof Tree)
         if(!this._inited){
             //TODO: sync for dom.
-            this._elem.appendChild(this.getNodesDOM());
-            this._inited = true;
-            this.expanded = true;
+            var r = this.root();
+            if(!r.lazyload){
+                this._elem.appendChild(this.makeNodesDOM(
+                    this.root().datas_cache[this.id]));
+                this._inited = true;
+                this.expanded = true;
+            }else{
+                var callback = F.createDelegate(this, function(state,json){
+                    if("ing" == state){return;}
+                    if(state == "ok"){
+                        try{
+                            var datas = window.eval(json.responseText);
+                        }catch(ex){
+                            throw new Error("json datas error from server.");
+                        }
+                        if(0==datas.length){
+                            this.parent.hasNotChild();
+                        }else{
+                            this._elem.appendChild(this.makeNodesDOM(datas));
+                        }
+                        r.lazyload.callback.call(this, datas);
+                        this._inited = true;
+                        this.expanded = true;
+                    }else{
+                        throw new Error("Error from server.")
+                    }
+                });
+                AJAX.send(r.lazyload.url, r.lazyload.type, r.lazyload.data.replace("${ID}", this.parent.id),
+                    callback, r.lazyload.async);
+            }
         }else{
             this.expanded = true;
         }
@@ -490,16 +530,19 @@ var Smartree = (function(){
             this.expand();
         }
     };
-    Tree.prototype.getNodesDOM = function(){
+    Tree.prototype.makeNodesDOM = function(datas){
         var frag = document.createDocumentFragment();
-        var datas = this.root().datas_cache[this.id];
-        for(var i=0,l=datas.length,node; i<l; i++){
+        for(var i=0,l=datas.length; i<l; i++){
             var node = new Node();
             node.id = datas[i].id;
             node.text = datas[i].text;
             node.uri = datas[i].url || "javascript:void(0);";
+            node.type = datas[i].type || "folder";
             this.add(node);
             node.isLast = i==l-1;
+            if(false!==datas[i].hasChild){
+                node.addChild(new Tree());
+            }
             frag.appendChild(node.valueOf(this.root().syncLoad));
         }
         //for(var i=0,l=this.nodes.length; i<l; i++){
@@ -631,9 +674,10 @@ var Smartree = (function(){
                 node.id = items[i].id;
                 node.text = items[i].text;
                 node.uri = items[i].url || "javascript:void(0);";
+                node.type = items[i].type || "folder";
                 tree.add(node);
 
-                if(cache[items[i].id] && cache[items[i].id].length>0){
+                if(items[i].hasChild || (cache[items[i].id] && cache[items[i].id].length>0)){
                     var subtree = new Tree();
                     node.addChild(subtree);
                     deep(cache[items[i].id], subtree);
@@ -669,17 +713,56 @@ var Smartree = (function(){
      * datas 和 dom 参数最好只有其中一个属性。
      *  options:{
      *      datas:[],
+     *      root:0，
+     *      lazyload:{
+     *          url:"datas.json"
+     *          async:true,
+     *          type:"get",
+     *          data:"id=${ID}&user=1",
+     *          callback: function(dataJSON){}
+     *      },
+     *  }
+     *  options:{
      *      dom:document.getElementById("tree"),
-     *      lazyload:true,
-     *      datasrc:"datas.json"
+     *      lazyload:false,
      *  }
      */
     function Smartree(options){
-        if(arguments[0] instanceof Array){
-            return parseArray(arguments[0], arguments[1]);
-        }else{
-            return parseDOM(arguments[0]);
+        var opt = {
+            datas:[],
+            root:0,
+            lazyload:false,
+            dom:null
+        };
+        for(var k in options){
+            if(options.hasOwnProperty(k)){
+                opt[k] = options[k];
+            }
         }
+        if(options.hasOwnProperty("lazyload")){
+            opt.lazyload = {
+                url:"",
+                async:true,
+                type:"get",
+                data:"id=${ID}",
+                callback:function(){}
+            };
+            for(var k in options.lazyload){
+                if(options.lazyload.hasOwnProperty(k)){
+                    opt.lazyload[k] = options.lazyload[k];
+                }
+            }
+        }
+
+        var tree;
+        if(opt.datas && (opt.datas instanceof Array)){
+            tree = parseArray(opt.datas, opt.root);
+            tree.lazyload = opt.lazyload;
+        }else{
+            // TODO: update this.
+            tree = parseDOM(arguments[0]);
+        }
+        return tree;
     }
     return Smartree;
 })();
