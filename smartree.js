@@ -499,12 +499,13 @@ var Smartree = (function(){
                         }catch(ex){
                             throw new Error("json datas error from server.");
                         }
+                        var d = r.lazyload.callback.call(this, datas);
+						if(d && d instanceof Array){datas = d;}
                         if(0==datas.length){
                             this.parent.hasNotChild();
                         }else{
                             this._elem.appendChild(this.makeNodesDOM(datas));
                         }
-                        r.lazyload.callback.call(this, datas);
                         this._inited = true;
                         this.expanded = true;
                     }else{
@@ -745,7 +746,7 @@ var Smartree = (function(){
                 async:true,
                 type:"get",
                 data:"id=${ID}",
-                callback:function(){}
+                callback:function(datas){return datas;}
             };
             for(var k in options.lazyload){
                 if(options.lazyload.hasOwnProperty(k)){
