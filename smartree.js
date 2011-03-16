@@ -310,14 +310,22 @@ var Smartree = (function(){
     };
     Node.prototype.expand = function(){
         D.removeClass(this._elem, "fold");
+        // hacks for IE6.
+        D.removeClass(this._expandHandle, "fold");
         D.addClass(this._elem, "expand");
+        // hacks for IE6.
+        D.addClass(this._expandHandle, "expand");
         if(!this.children){return;}
         this.children.expand();
         this.expanded = true;
     };
     Node.prototype.fold = function(){
         D.removeClass(this._elem, "expand");
+        // hacks for IE6.
+        D.removeClass(this._expandHandle, "expand");
         D.addClass(this._elem, "fold");
+        // hacks for IE6.
+        D.addClass(this._expandHandle, "fold");
         if(!this.children){return;}
         this.children.fold();
         this.expanded = false;
@@ -417,9 +425,14 @@ var Smartree = (function(){
         if(this.isLast){D.addClass(node, "last");}
         D.addClass(node, this.type);
         var bar = document.createElement("ins");
+        // hacks for IE6.
+        if(this.hasChild()){D.addClass(bar, "fold");}
+        if(this.isLast){D.addClass(bar, "last");}
         var link = document.createElement("a");
         link.href = this.uri;
         var icon = document.createElement("ins");
+        // hacks for IE6.
+        if(this.hasChild()){D.addClass(icon, "folder");}
         var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
@@ -715,6 +728,9 @@ var Smartree = (function(){
                 node.text = items[i].text;
                 node.uri = items[i].url || "javascript:void(0);";
                 node.type = items[i].type || "folder";
+                if(i == l-1){
+                    node.isLast = true;
+                }
                 tree.add(node);
 
                 if(items[i].hasChild || (cache[items[i].id] && cache[items[i].id].length>0)){
