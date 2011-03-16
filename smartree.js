@@ -541,7 +541,7 @@ var Smartree = (function(){
             node.type = datas[i].type || "folder";
             this.add(node);
             node.isLast = i==l-1;
-            if(false!==datas[i].hasChild){
+            if(!!datas[i].hasChild){
                 node.addChild(new Tree());
             }
             frag.appendChild(node.valueOf(this.root().syncLoad));
@@ -588,6 +588,7 @@ var Smartree = (function(){
         this.focusedNodes = [];
         this.syncLoad = false;
         this.datas = null;
+        this.index = null;
         this.datas_cache = null;
     };
     Root.prototype = new Tree();
@@ -639,6 +640,36 @@ var Smartree = (function(){
         }
         this.focusedNodes.splice(0, l);
     };
+    Root.prototype.filterData = function(key){
+        key = key.toLowerCase();
+        var data=[], cache={};
+        // get matched nodes.
+        for(var i=0,l=this.datas.length; i<l; i++){
+            if(this.datas[i].text.toLowerCase().indexOf(key) >= 0){
+                data[data.length] = this.datas[i];
+                cache[this.datas[i].id] = true;
+            }
+        }
+        // get matched node's parents.
+        for(var i=0,n,l=data.length; i<l; i++){
+            n = data[i];
+            while(n.pid != this.id){
+                if(!cache[n.pid]){
+                    data[data.length] = this.index[n.pid];
+                    cache[n.pid] = true;
+                }
+                n = this.index[n.pid];
+            }
+        }
+        return data;
+    };
+    Root.prototype.filter = function(key){
+        this._elem.style.display = "none";
+        var result = this.filterData(key);
+        this._resultTree = parseArray(result, this.id);
+        this._elem.parentNode.insertBefore(this._resultTree.valueOf(), this._elem);
+        this._resultTree.style.display = "block";
+    };
     Root.prototype.valueOf = function(){
         if(0 == this.nodes.length){
             return document.createTextNode("");
@@ -652,14 +683,22 @@ var Smartree = (function(){
     // TODO:
     function parseArray(arr, rootId, handler){
         rootId = rootId || 0;
-        var cache={};
+        //  tree,     array.
+        var cache={}, index={};
         for(var i=0,pid,l=arr.length; i<l; i++){
+            // cache tree struct.
             pid = arr[i].pid;
             if(!cache[pid]){ cache[pid] = []; }
             cache[pid].push(arr[i]);
+            // cache array index.
+            index[arr[i].id] = arr[i];
         }
 
+        // XXX: What's the Root when run 2 times.
         var root = new Root();
+        root.id = rootId;
+        root.datas = arr;
+        root.index = index;
         root.datas_cache = cache;
         var node = cache[rootId];
 

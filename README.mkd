@@ -10,4 +10,4 @@ Smart Tree 致力于实现一个简洁、轻量级、高效的树形控件，不
 ## support
 * IE6+, FF1+, Chrome1+, Safari3+, Opera8+
 * checkbox
-* filter by key
+* Client & Server Filter support.
