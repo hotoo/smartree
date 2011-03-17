@@ -6,6 +6,10 @@ var Smartree = (function(){
             if (elem.nodeType == 1)
                 elem.appendChild( child );
         },
+        remove: function(node){
+            node.parentNode.removeChild(node);
+            node = null;
+        },
         prepend: function(elem, child) {
             if (elem.nodeType == 1)
                 elem.insertBefore( child, elem.firstChild );
@@ -298,10 +302,10 @@ var Smartree = (function(){
         this.parent = null;
         this.children = null;
         this.id = "";
-        this.text = "";                     // node link's display name.
+        this.text = "(empty)";                     // node link's display name.
         this.title = "";                    // link's title attribute.
         this.uri = "javascript:void(0);";   // link's href attribute.
-        this.target = "_this";              // link's target attribute.
+        this.target = "_self";              // link's target attribute.
         this.handler = null;                // expand & fold bar.
         this.type = "folder";
         // READ_ONLY.
@@ -310,22 +314,18 @@ var Smartree = (function(){
     };
     Node.prototype.expand = function(){
         D.removeClass(this._elem, "fold");
-        // hacks for IE6.
-        D.removeClass(this._expandHandle, "fold");
+        D.removeClass(this._expandHandle, "fold"); // hacks for IE6.
         D.addClass(this._elem, "expand");
-        // hacks for IE6.
-        D.addClass(this._expandHandle, "expand");
+        D.addClass(this._expandHandle, "expand"); // hacks for IE6.
         if(!this.children){return;}
         this.children.expand();
         this.expanded = true;
     };
     Node.prototype.fold = function(){
         D.removeClass(this._elem, "expand");
-        // hacks for IE6.
-        D.removeClass(this._expandHandle, "expand");
+        D.removeClass(this._expandHandle, "expand"); // hacks for IE6.
         D.addClass(this._elem, "fold");
-        // hacks for IE6.
-        D.addClass(this._expandHandle, "fold");
+        D.addClass(this._expandHandle, "fold"); // hacks for IE6.
         if(!this.children){return;}
         this.children.fold();
         this.expanded = false;
@@ -425,14 +425,13 @@ var Smartree = (function(){
         if(this.isLast){D.addClass(node, "last");}
         D.addClass(node, this.type);
         var bar = document.createElement("ins");
-        // hacks for IE6.
-        if(this.hasChild()){D.addClass(bar, "fold");}
+        if(this.hasChild()){D.addClass(bar, "fold");} // hacks for IE6.
         if(this.isLast){D.addClass(bar, "last");}
         var link = document.createElement("a");
         link.href = this.uri;
+        link.target = this.target;
         var icon = document.createElement("ins");
-        // hacks for IE6.
-        if(this.hasChild()){D.addClass(icon, "folder");}
+        if(this.hasChild()){D.addClass(icon, "folder");} // hacks for IE6.
         var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
@@ -532,6 +531,11 @@ var Smartree = (function(){
             this.expanded = true;
         }
     };
+    Tree.prototype.expandAll = function(){
+        //for(var i=0,l=this.nodes.length; i<l; i++){
+            //this.nodes[i].expand();
+        //}
+    };
     Tree.prototype.fold = function(){
         // hacks for IE6.
         this._elem.style.display = "none";
@@ -548,10 +552,11 @@ var Smartree = (function(){
         var frag = document.createDocumentFragment();
         for(var i=0,l=datas.length; i<l; i++){
             var node = new Node();
-            node.id = datas[i].id;
-            node.text = datas[i].text;
-            node.uri = datas[i].url || "javascript:void(0);";
-            node.type = datas[i].type || "folder";
+            if(datas[i].id){node.id = datas[i].id;}
+            if(datas[i].text){node.text = datas[i].text;}
+            if(datas[i].url){node.uri = datas[i].url;}
+            if(datas[i].type){node.type = datas[i].type;}
+            if(datas[i].target){node.target = datas[i].target;}
             this.add(node);
             node.isLast = i==l-1;
             if(!!datas[i].hasChild){
@@ -593,11 +598,10 @@ var Smartree = (function(){
         this.nodes.push(node);
     };
     Tree.prototype.remove = function(node){};
-    Tree.prototype.filter = function(){
-    };
 
     // ROOT Tree.
     var Root = function(){
+        Tree.prototype.constructor.call(this);
         this.focusedNodes = [];
         this.syncLoad = false;
         this.datas = null;
@@ -664,24 +668,53 @@ var Smartree = (function(){
             }
         }
         // get matched node's parents.
-        for(var i=0,n,l=data.length; i<l; i++){
+        for(var i=0,n,lk,l=data.length; i<l; i++){
             n = data[i];
+            lk = {}; // cache nodes link, for check recursive.
             while(n.pid != this.id){
                 if(!cache[n.pid]){
                     data[data.length] = this.index[n.pid];
                     cache[n.pid] = true;
                 }
                 n = this.index[n.pid];
+                if(lk.hasOwnProperty(n.id)){
+                    throw new Error("Nodes recursived.")
+                }
+                lk[n.id] = true;
             }
         }
         return data;
     };
     Root.prototype.filter = function(key){
+        if(this._resultTree){
+            this._resultTree._elem.style.display = "none";
+            D.remove(this._resultTree._elem);
+            this._resultTree = null;
+        }
+        // clear no found error message.
+        if(this._resultNoFound){
+            this._resultNoFound.style.display = "none";
+            D.remove(this._resultNoFound);
+            this._resultNoFound = null;
+        }
+        if(!key){
+            this._elem.style.display = "block";
+            return;
+        }
         this._elem.style.display = "none";
         var result = this.filterData(key);
-        this._resultTree = parseArray(result, this.id);
-        this._elem.parentNode.insertBefore(this._resultTree.valueOf(), this._elem);
-        this._resultTree.style.display = "block";
+        if(result.length>0){
+            this._resultTree = parseArray(result, this.id);
+            this._elem.parentNode.insertBefore(this._resultTree.valueOf(), this._elem);
+            //this._resultTree.expandAll();
+            this._resultTree._elem.style.display = "block";
+        }else{
+            this._resultNoFound = document.createElement("div");
+            this._resultNoFound.className = "error";
+            this._resultNoFound.appendChild(document.createTextNode("没有找到匹配的节点。"));
+            this._elem.parentNode.appendChild(this._resultNoFound, this._elem);
+            this._resultNoFound.style.display = "block";
+        }
     };
     Root.prototype.valueOf = function(){
         if(0 == this.nodes.length){
