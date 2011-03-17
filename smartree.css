@@ -74,6 +74,7 @@ div.smartree li ins.checkbox{
     background-position:0 -36px!important;
     _background-position:0 -38px;
     cursor:pointer;
+    margin-right:0;
 }
 div.smartree li ins.checked{
     background-position:-37px -36px!important;
@@ -82,7 +83,7 @@ div.smartree li ins.checked{
 
 /* default node type is folder, for node type[folder/file/...]. */
 div.smartree li        > a > ins,
-div.smartree li.folder > a > ins{background-position:0 -20px!important;}
+div.smartree li.folder > a > ins{background-position:0 -20px!important; margin-right:4px}
 div.smartree li a ins.folder{_background-position:0 -20px!important;}
 div.smartree li.file   > a > ins{background-position:-20px -20px!important;} /* node type is file, for expand bar. */
 div.smartree li a ins.file{_background-position:-20px -20px!important;} /*hacks for ie6.*/
