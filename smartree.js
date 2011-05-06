@@ -431,7 +431,8 @@ var Smartree = (function(){
         link.href = this.uri;
         link.target = this.target;
         var icon = document.createElement("ins");
-        if(this.hasChild()){D.addClass(icon, "folder");} // hacks for IE6.
+        //if(this.hasChild()){D.addClass(icon, "folder");} // hacks for IE6.
+        D.addClass(icon, this.type); // hacks for IE6.
         var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
@@ -646,9 +647,18 @@ var Smartree = (function(){
     };
     /**
      * @param {Node,String} node, 节点或者节点ID。
-     *
+     * TODO: focus the node by node id, also load && expand parents.
      */
     Root.prototype.focus = function(node){
+        // node id.
+        if(node instanceof String || typeof node=="string"){
+            if(this.datas_cache[node]){
+                console.log(this.datas_cache[node].length);
+            }
+        }
+        //if(node instanceof Node){
+            //node.parent
+        //}
     };
     Root.prototype.blurAll = function(){
         var l=this.focusedNodes.length
@@ -711,7 +721,7 @@ var Smartree = (function(){
         }else{
             this._resultNoFound = document.createElement("div");
             this._resultNoFound.className = "error";
-            this._resultNoFound.appendChild(document.createTextNode("没有找到匹配的节点。"));
+            this._resultNoFound.appendChild(document.createTextNode("No node matched."));
             this._elem.parentNode.appendChild(this._resultNoFound, this._elem);
             this._resultNoFound.style.display = "block";
         }
@@ -761,6 +771,7 @@ var Smartree = (function(){
                 node.text = items[i].text;
                 node.uri = items[i].url || "javascript:void(0);";
                 node.type = items[i].type || "folder";
+                node.target = items[i].target || "_self";
                 if(i == l-1){
                     node.isLast = true;
                 }
