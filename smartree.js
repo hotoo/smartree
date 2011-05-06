@@ -372,7 +372,7 @@ var Smartree = (function(){
         var path = "";
         var node = this;
         do{
-            path = node.text + sep + path;
+            path = sep + node.text + path;
             node = node.parent.parent;
             //          |         +-- Tree<ul>.
             //          +-- Node<li>.
@@ -410,6 +410,9 @@ var Smartree = (function(){
     Node.prototype.text = function(){
         return this._text.nodeValue;
     };
+	Node.prototype.isRoot = function(){
+		return this.parent.id == this.root().id;
+	};
     /*
      *
      * <li>
@@ -423,6 +426,7 @@ var Smartree = (function(){
     Node.prototype.valueOf = function(sync){
         var node = document.createElement("li");
         if(this.isLast){D.addClass(node, "last");}
+		if(this.isRoot()){D.addClass(node, "root");}
         D.addClass(node, this.type);
         var bar = document.createElement("ins");
         if(this.hasChild()){D.addClass(bar, "fold");} // hacks for IE6.
@@ -431,9 +435,9 @@ var Smartree = (function(){
         link.href = this.uri;
         link.target = this.target;
         var icon = document.createElement("ins");
-        //if(this.hasChild()){D.addClass(icon, "folder");} // hacks for IE6.
-        D.addClass(icon, this.type); // hacks for IE6.
-        var text = document.createTextNode(this.text);
+        //if(this.hasChild()){D.addClass(icon, this.type);} // hacks for IE6.
+		D.addClass(icon, this.type); // hacks for IE6.
+		var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
         link.appendChild(icon);
@@ -495,6 +499,8 @@ var Smartree = (function(){
     Tree.prototype.expand = function(){
         // hacks for IE6.
         this._elem.style.display = "block";
+        document.body.style.zoom = 1.1;
+        document.body.style.zoom = 1;
         if(!this._inited){
             //TODO: sync for dom.
             var r = this.root();
@@ -521,6 +527,9 @@ var Smartree = (function(){
                         }
                         this._inited = true;
                         this.expanded = true;
+                        this._elem.style.display = "block";
+                        document.body.style.zoom = 1.1;
+                        document.body.style.zoom = 1;
                     }else{
                         throw new Error("Error from server.")
                     }
@@ -541,6 +550,8 @@ var Smartree = (function(){
         // hacks for IE6.
         this._elem.style.display = "none";
         this.expanded = false;
+        document.body.style.zoom = 1.1;
+        document.body.style.zoom = 1;
     };
     Tree.prototype.toggle = function(){
         if(this.expanded){
@@ -721,7 +732,7 @@ var Smartree = (function(){
         }else{
             this._resultNoFound = document.createElement("div");
             this._resultNoFound.className = "error";
-            this._resultNoFound.appendChild(document.createTextNode("No node matched."));
+            this._resultNoFound.appendChild(document.createTextNode("没有匹配的节点。"));
             this._elem.parentNode.appendChild(this._resultNoFound, this._elem);
             this._resultNoFound.style.display = "block";
         }
