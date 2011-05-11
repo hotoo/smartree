@@ -312,21 +312,24 @@ var Smartree = (function(){
         this.isLast = false;                // is the last node of tree.
         this.expanded = false;              // node status is expanded.
     };
-    Node.prototype.expand = function(){
+    // @param {Boolean} expandAll.
+    Node.prototype.expand = function(expandAll){
+        if(!this.children){return;}
+        if(this.expanded){return;}
         D.removeClass(this._elem, "fold");
         D.removeClass(this._expandHandle, "fold"); // hacks for IE6.
         D.addClass(this._elem, "expand");
         D.addClass(this._expandHandle, "expand"); // hacks for IE6.
-        if(!this.children){return;}
-        this.children.expand();
+        this.children.expand(expandAll);
         this.expanded = true;
     };
     Node.prototype.fold = function(){
+        if(!this.children){return;}
+        if(!this.expanded){return;}
         D.removeClass(this._elem, "expand");
         D.removeClass(this._expandHandle, "expand"); // hacks for IE6.
         D.addClass(this._elem, "fold");
         D.addClass(this._expandHandle, "fold"); // hacks for IE6.
-        if(!this.children){return;}
         this.children.fold();
         this.expanded = false;
     };
@@ -496,23 +499,46 @@ var Smartree = (function(){
         }
         return root;
     };
-    Tree.prototype.expand = function(){
+    // @param {Boolean} expandAll.
+    Tree.prototype.expand = function(expandAll){
+        if(this.expanded){return;}
         // hacks for IE6.
         this._elem.style.display = "block";
         document.body.style.zoom = 1.1;
         document.body.style.zoom = 1;
         if(!this._inited){
             //TODO: sync for dom.
+
+            // Loading...
+            var loadingNode = document.createElement("li");
+            var loadingExpand = document.createElement("ins");
+            var loadingIcon = document.createElement("ins");
+            var loadingWrap = document.createElement("a");
+            loadingIcon.className = "loading";
+            var loadingText = document.createTextNode("Loading...");
+            loadingNode.appendChild(loadingExpand);
+            loadingNode.appendChild(loadingWrap);
+            loadingWrap.appendChild(loadingIcon)
+            loadingWrap.appendChild(loadingText);
+            this._elem.appendChild(loadingNode);
+
             var r = this.root();
             if(!r.lazyload){
+                // XXX: 调用过多。
+                this._elem.removeChild(loadingNode);
                 this._elem.appendChild(this.makeNodesDOM(
-                    this.root().datas_cache[this.id]));
+                    this.root().datas_cache[this.parent.id]));
                 this._inited = true;
                 this.expanded = true;
+                if(expandAll){
+                    this.expandAll();
+                    //if(window.console && window.console.log){window.console.log(this.root().datas.length, this.parent.id);}
+                }
             }else{
                 var callback = F.createDelegate(this, function(state,json){
                     if("ing" == state){return;}
                     if(state == "ok"){
+                        this._elem.removeChild(loadingNode);
                         try{
                             var datas = window.eval(json.responseText);
                         }catch(ex){
@@ -530,6 +556,9 @@ var Smartree = (function(){
                         this._elem.style.display = "block";
                         document.body.style.zoom = 1.1;
                         document.body.style.zoom = 1;
+                        if(expandAll){
+                            this.expandAll();
+                        }
                     }else{
                         throw new Error("Error from server.")
                     }
@@ -542,11 +571,12 @@ var Smartree = (function(){
         }
     };
     Tree.prototype.expandAll = function(){
-        //for(var i=0,l=this.nodes.length; i<l; i++){
-            //this.nodes[i].expand();
-        //}
+        for(var i=0,l=this.nodes.length; i<l; i++){
+            this.nodes[i].expand(true);
+        }
     };
     Tree.prototype.fold = function(){
+        if(!this.expanded){return;}
         // hacks for IE6.
         this._elem.style.display = "none";
         this.expanded = false;
@@ -664,7 +694,7 @@ var Smartree = (function(){
         // node id.
         if(node instanceof String || typeof node=="string"){
             if(this.datas_cache[node]){
-                console.log(this.datas_cache[node].length);
+                //console.log(this.datas_cache[node].length);
             }
         }
         //if(node instanceof Node){
@@ -698,6 +728,7 @@ var Smartree = (function(){
                     cache[n.pid] = true;
                 }
                 n = this.index[n.pid];
+                // 检查节点是否有递归挂载。
                 if(lk.hasOwnProperty(n.id)){
                     throw new Error("Nodes recursived.")
                 }
@@ -727,7 +758,7 @@ var Smartree = (function(){
         if(result.length>0){
             this._resultTree = parseArray(result, this.id);
             this._elem.parentNode.insertBefore(this._resultTree.valueOf(), this._elem);
-            //this._resultTree.expandAll();
+            this._resultTree.expandAll();
             this._resultTree._elem.style.display = "block";
         }else{
             this._resultNoFound = document.createElement("div");
