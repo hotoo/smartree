@@ -312,21 +312,24 @@ var Smartree = (function(){
         this.isLast = false;                // is the last node of tree.
         this.expanded = false;              // node status is expanded.
     };
-    Node.prototype.expand = function(){
+    // @param {Boolean} expandAll.
+    Node.prototype.expand = function(expandAll){
+        if(!this.children){return;}
+        if(this.expanded){return;}
         D.removeClass(this._elem, "fold");
         D.removeClass(this._expandHandle, "fold"); // hacks for IE6.
         D.addClass(this._elem, "expand");
         D.addClass(this._expandHandle, "expand"); // hacks for IE6.
-        if(!this.children){return;}
-        this.children.expand();
+        this.children.expand(expandAll);
         this.expanded = true;
     };
     Node.prototype.fold = function(){
+        if(!this.children){return;}
+        if(!this.expanded){return;}
         D.removeClass(this._elem, "expand");
         D.removeClass(this._expandHandle, "expand"); // hacks for IE6.
         D.addClass(this._elem, "fold");
         D.addClass(this._expandHandle, "fold"); // hacks for IE6.
-        if(!this.children){return;}
         this.children.fold();
         this.expanded = false;
     };
@@ -372,7 +375,7 @@ var Smartree = (function(){
         var path = "";
         var node = this;
         do{
-            path = node.text + sep + path;
+            path = sep + node.text + path;
             node = node.parent.parent;
             //          |         +-- Tree<ul>.
             //          +-- Node<li>.
@@ -410,6 +413,9 @@ var Smartree = (function(){
     Node.prototype.text = function(){
         return this._text.nodeValue;
     };
+	Node.prototype.isRoot = function(){
+		return this.parent.id == this.root().id;
+	};
     /*
      *
      * <li>
@@ -423,6 +429,7 @@ var Smartree = (function(){
     Node.prototype.valueOf = function(sync){
         var node = document.createElement("li");
         if(this.isLast){D.addClass(node, "last");}
+		if(this.isRoot()){D.addClass(node, "root");}
         D.addClass(node, this.type);
         var bar = document.createElement("ins");
         if(this.hasChild()){D.addClass(bar, "fold");} // hacks for IE6.
@@ -431,8 +438,9 @@ var Smartree = (function(){
         link.href = this.uri;
         link.target = this.target;
         var icon = document.createElement("ins");
-        if(this.hasChild()){D.addClass(icon, "folder");} // hacks for IE6.
-        var text = document.createTextNode(this.text);
+        //if(this.hasChild()){D.addClass(icon, this.type);} // hacks for IE6.
+		D.addClass(icon, this.type); // hacks for IE6.
+		var text = document.createTextNode(this.text);
         node.appendChild(bar);
         node.appendChild(link);
         link.appendChild(icon);
@@ -491,21 +499,46 @@ var Smartree = (function(){
         }
         return root;
     };
-    Tree.prototype.expand = function(){
+    // @param {Boolean} expandAll.
+    Tree.prototype.expand = function(expandAll){
+        if(this.expanded){return;}
         // hacks for IE6.
         this._elem.style.display = "block";
+        document.body.style.zoom = 1.1;
+        document.body.style.zoom = 1;
         if(!this._inited){
             //TODO: sync for dom.
+
+            // Loading...
+            var loadingNode = document.createElement("li");
+            var loadingExpand = document.createElement("ins");
+            var loadingIcon = document.createElement("ins");
+            var loadingWrap = document.createElement("a");
+            loadingIcon.className = "loading";
+            var loadingText = document.createTextNode("Loading...");
+            loadingNode.appendChild(loadingExpand);
+            loadingNode.appendChild(loadingWrap);
+            loadingWrap.appendChild(loadingIcon)
+            loadingWrap.appendChild(loadingText);
+            this._elem.appendChild(loadingNode);
+
             var r = this.root();
             if(!r.lazyload){
+                // XXX: 调用过多。
+                this._elem.removeChild(loadingNode);
                 this._elem.appendChild(this.makeNodesDOM(
-                    this.root().datas_cache[this.id]));
+                    this.root().datas_cache[this.parent.id]));
                 this._inited = true;
                 this.expanded = true;
+                if(expandAll){
+                    this.expandAll();
+                    //if(window.console && window.console.log){window.console.log(this.root().datas.length, this.parent.id);}
+                }
             }else{
                 var callback = F.createDelegate(this, function(state,json){
                     if("ing" == state){return;}
                     if(state == "ok"){
+                        this._elem.removeChild(loadingNode);
                         try{
                             var datas = window.eval(json.responseText);
                         }catch(ex){
@@ -520,6 +553,12 @@ var Smartree = (function(){
                         }
                         this._inited = true;
                         this.expanded = true;
+                        this._elem.style.display = "block";
+                        document.body.style.zoom = 1.1;
+                        document.body.style.zoom = 1;
+                        if(expandAll){
+                            this.expandAll();
+                        }
                     }else{
                         throw new Error("Error from server.")
                     }
@@ -532,14 +571,17 @@ var Smartree = (function(){
         }
     };
     Tree.prototype.expandAll = function(){
-        //for(var i=0,l=this.nodes.length; i<l; i++){
-            //this.nodes[i].expand();
-        //}
+        for(var i=0,l=this.nodes.length; i<l; i++){
+            this.nodes[i].expand(true);
+        }
     };
     Tree.prototype.fold = function(){
+        if(!this.expanded){return;}
         // hacks for IE6.
         this._elem.style.display = "none";
         this.expanded = false;
+        document.body.style.zoom = 1.1;
+        document.body.style.zoom = 1;
     };
     Tree.prototype.toggle = function(){
         if(this.expanded){
@@ -646,9 +688,18 @@ var Smartree = (function(){
     };
     /**
      * @param {Node,String} node, 节点或者节点ID。
-     *
+     * TODO: focus the node by node id, also load && expand parents.
      */
     Root.prototype.focus = function(node){
+        // node id.
+        if(node instanceof String || typeof node=="string"){
+            if(this.datas_cache[node]){
+                //console.log(this.datas_cache[node].length);
+            }
+        }
+        //if(node instanceof Node){
+            //node.parent
+        //}
     };
     Root.prototype.blurAll = function(){
         var l=this.focusedNodes.length
@@ -677,6 +728,7 @@ var Smartree = (function(){
                     cache[n.pid] = true;
                 }
                 n = this.index[n.pid];
+                // 检查节点是否有递归挂载。
                 if(lk.hasOwnProperty(n.id)){
                     throw new Error("Nodes recursived.")
                 }
@@ -706,12 +758,12 @@ var Smartree = (function(){
         if(result.length>0){
             this._resultTree = parseArray(result, this.id);
             this._elem.parentNode.insertBefore(this._resultTree.valueOf(), this._elem);
-            //this._resultTree.expandAll();
+            this._resultTree.expandAll();
             this._resultTree._elem.style.display = "block";
         }else{
             this._resultNoFound = document.createElement("div");
             this._resultNoFound.className = "error";
-            this._resultNoFound.appendChild(document.createTextNode("没有找到匹配的节点。"));
+            this._resultNoFound.appendChild(document.createTextNode("没有匹配的节点。"));
             this._elem.parentNode.appendChild(this._resultNoFound, this._elem);
             this._resultNoFound.style.display = "block";
         }
@@ -761,6 +813,7 @@ var Smartree = (function(){
                 node.text = items[i].text;
                 node.uri = items[i].url || "javascript:void(0);";
                 node.type = items[i].type || "folder";
+                node.target = items[i].target || "_self";
                 if(i == l-1){
                     node.isLast = true;
                 }

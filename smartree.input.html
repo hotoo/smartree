@@ -9,7 +9,8 @@
 <title>smartree</title>
 <link rel="stylesheet" type="text/css" href="smartree.css" media="all" />
 <style type="text/css" media="screen">
-div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding:2px; width:100%;}
+div.smartree-box{background:#f6f6f6 none; padding:4px; border:1px solid #ccc;}
+div.smartree{border-bottom:1px solid #ccc; margin:2px; padding:2px; width:100%;}
 </style>
 </head>
 <body>
@@ -21,30 +22,13 @@ div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding
             <input type="tree" name="tot" value="1024" />
         </form>
     </div>
-    <div>
-        <button type="button" id="btn-getpath">getPath()</button>
-    </div>
-    <div id="debug"></div>
-    <div>
-        <form id="formSearch" name="formSearch" action="javascript:void(0)" method="get" accept-charset="utf-8">
-            <input type="text" name="key" value="" />
-            <input type="submit" value="Search" />
-        </form>
-    </div>
-    <div id="demo" class="smartree"></div>
 
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
 <script type="text/javascript" src="smartree.js"></script>
 <script type="text/javascript">/*<![CDATA[*/
 
-    function getQuery(name){
-      var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
-      var r = window.location.search.substr(1).match(reg);
-      if (r!=null) return unescape(r[2]); return null;
-    }
-    var tot = getQuery("tot");      tot = !tot || isNaN(tot) ? 1024 : tot;
-    var cns = getQuery("child"); cns = !cns || isNaN(cns) ? 10 : cns;
-    document.forms[0].tot.value = tot;
-    document.forms[0].child.value = cns;
+    var tot = 1024;
+    var cns = 10;
 
     var nodes = [];
     nodes[0] = {"pid":"0", "id":"1", "text":"Node 1"};
@@ -61,25 +45,93 @@ div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding
         nodes[i] = {"pid":Math.floor(Math.random()*(tot/cns))+1, "id":i, "text":"Node "+i};
     }
 
-    function $(id){
-        return document.getElementById(id);
-    }
-    window.onload = function(){
-        var tree = new Smartree({
+    //function $(id){
+    //    return document.getElementById(id);
+    //}
+    //window.onload = function(){
+    //    var tree = new Smartree({
+    //        datas:nodes,
+    //        root:0
+    //    });
+    //    document.getElementById("demo").appendChild(tree.valueOf());
+    //    $("btn-getpath").onclick = function(){
+    //        $("debug").innerHTML = tree.getFocusedPath().join("<br />");
+    //    };
+
+    //    //$("from-search").onsubmit = function(){
+    //    document.forms["formSearch"].onsubmit = function(){
+    //        tree.filter(this.key.value);
+    //        return false;
+    //    };
+    //};
+
+    (function($){
+        $.fn.treeInput = function(opt){
+            var defaults = {
+                datas:[],
+                root:0
+            };
+            var options = $.extend(defaults, opt);
+            this.each(function(){
+                var ME = $(this);
+                // init input elements.
+                ME.hide();
+                var valElem = $('<input type="text" readonly="readonly" name="'+ME.attr("name")+'_path" value="'+ME.val()+'" />');
+                ME.before(valElem);
+                // init tree menu.
+                var treePanel = document.createElement("div");
+                treePanel.className = "smartree-box";
+                treePanel.style.display = "none";
+                var treeContainer = document.createElement("div");
+                treeContainer.className = "smartree";
+                treeContainer.style.width = "300px";
+                treeContainer.style.maxHeight = "400px";
+                treeContainer.style.overflow = "auto";
+                treePanel.appendChild(treeContainer);
+                var btnOk = document.createElement("input");
+                btnOk.type="button";
+                btnOk.value = "确定";
+                btnOk.onclick = function(evt){
+                    var ids=[], _ns=tree.getFocusedNodes();
+                    for(var _i=0,l=_ns.length; _i<l; _i++){
+                        ids[ids.length] = _ns[_i].id;
+                    }
+                    ME.val(ids.join(","));
+                    valElem.val(tree.getFocusedPath());
+                    treePanel.style.display = "none";
+                    console.log(ME.val())
+                };
+                var btnCancel = document.createElement("input");
+                btnCancel.type="reset";
+                btnCancel.value = "取消";
+                btnCancel.onclick = function(){
+                    treePanel.style.display = "none";
+                };
+                treePanel.appendChild(btnOk);
+                treePanel.appendChild(btnCancel);
+
+                var treeElem = $(treePanel).appendTo(document.body);
+                var pos = valElem.offset();
+                treeElem.css({position:"absolute", left:pos.left, top:pos.top+24});
+                var tree = new Smartree(options);
+                treeContainer.appendChild(tree.valueOf());
+
+                // link input element and tree.
+                valElem.focus(function(){
+                    treeElem.show();
+                    if(ME.val()){
+                        try{tree.focus(ME.val());}catch(ex){}
+                    }
+                });
+            });
+        };
+    })(jQuery);
+    $(function(){
+        $("input[type=tree]").treeInput({
             datas:nodes,
             root:0
         });
-        document.getElementById("demo").appendChild(tree.valueOf());
-        $("btn-getpath").onclick = function(){
-            $("debug").innerHTML = tree.getFocusedPath().join("<br />");
-        };
-
-        //$("from-search").onsubmit = function(){
-        document.forms["formSearch"].onsubmit = function(){
-            tree.filter(this.key.value);
-            return false;
-        };
-    };
+    });
 /*]]>*/</script>
 
 </body>
