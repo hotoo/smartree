@@ -1,0 +1,27 @@
+{
+  "name": "smartree",
+  "version": "0.0.1",
+  "description": "Smart Tree.",
+  "homepage": "http://spmjs.io/docs/smartree/",
+  "author": "冒顿 <hotoo.cn@gmail.com>",
+  "maintainers": [
+    "冒顿 <hotoo.cn@gmail.com>"
+  ],
+  "keywords": ["utility", "Tree"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hotoo/smartree.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hotoo/smartree/issues"
+  },
+  "license": "MIT",
+  "spm": {
+    "main": "smartree.js",
+    "devDependencies": {
+      "jquery": "1.7.2",
+      "expect.js": "0.3.1"
+    },
+    "tests": "tests/*-spec.js"
+  }
+}
