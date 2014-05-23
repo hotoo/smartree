@@ -1,0 +1,23 @@
+
+= Smartree.js =
+
+== 用法： ==
+`new Smartree(options)`
+
+{{{class="javascript"
+var tree = new Smartree({
+    datas:[],
+    root:0
+    });
+var smt = document.getElementById("demo");
+smt.appendChild(tree.valueOf());
+}}}
+
+== 参数说明： ==
+`datas`:: 构造树的数据，一维数组，元素是包含特定属性的对象。
+`root`:: 构建树的根节点ID，默认为 0。
+`lazyload`:: 通过异步加载数据，如果未指定，则默认仅使用客户端数据。
+    `lazyload.url`:: 指定数据源。
+    `lazyload.type`:: 指定获取数据使用的请求方式(GET/POST)。
+    `lazyload.data`:: 指定获取数据时传递到服务端的数据，占位符 `${ID}` 会被替换为特定节点的 ID。
+    `lazyload.callback`:: 指定获取数据的回调函数，可用于处理服务器端返回的数据。

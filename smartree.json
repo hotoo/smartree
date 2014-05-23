@@ -1,0 +1,5 @@
+[
+{"id":1, "text":"Node", "hasChild":true},
+{"id":2, "text":"Node", "hasChild":true},
+{"id":3, "text":"Node", "hasChild":false, "type":"file"}
+]

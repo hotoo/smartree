@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN" lang="zh-CN">
+<head>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<title>smartree</title>
+<link rel="stylesheet" type="text/css" href="smartree.css" media="all" />
+<style type="text/css" media="screen">
+div.smartree{border:1px solid #eee; background:#f6f6f6 none; margin:2px; padding:2px; width:200px;}
+</style>
+</head>
+<body>
+
+
+static demo:
+<div class="smartree">
+    <ul>
+        <li class="folder expand"><ins></ins><a href="javascript:void(0);"><ins></ins>Node 1</a>
+            <ul>
+                <li><ins></ins><a href="javascript:void(0);" class="focus"><ins></ins>Node 1.1</a></li>
+                <li class="expand"><ins></ins><a href="javascript:void(0);"><ins></ins>Node 1.2</a>
+                    <ul>
+                        <li class="file"><ins></ins><a href="javascript:void(0);"><ins></ins>Node 1.2.1</a></li>
+                        <li class="file last"><ins></ins><a href="javascript:void(0);"><ins></ins>Node 1.2.2</a>
+                    </ul>
+                </li>
+                <li class="fold last"><ins></ins><a href="javascript:void(0);"><ins></ins>Node 1.2</a></li>
+            </ul>
+        </li>
+        <li><ins></ins><a href="javascript:void(0);"><ins class=""></ins>Node 2</a></li>
+        <li class="file"><ins></ins><a href="javascript:void(0);"><ins class=""></ins>Node 2</a></li>
+        <li class="folder"><ins></ins><a href="javascript:void(0);"><ins class=""></ins>Node 2</a></li>
+        <li class="last"><ins></ins><a href="javascript:void(0);"><ins class="folder"></ins>Node 3</a></li>
+    </ul>
+</div>
+
+normal:
+<div id="demo">
+	<ul>
+		<li>
+			<a href="#">Node 1</a>
+            <ul>
+            	<li>
+            		<a href="#">Node 1.1</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 1.2</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 1.3</a>
+            	</li>
+            </ul>
+		</li>
+		<li>
+			<a href="#">Node 2</a>
+            <ul>
+            	<li>
+            		<a href="#">Node 2.1</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.2</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.3</a>
+                    <ul>
+                    	<li>
+                    		<a href="#">Node 2.3.1</a>
+                    	</li>
+                    	<li>
+                    		<a href="#">Node 2.3.2</a>
+                    	</li>
+                    </ul>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.4</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.5</a>
+            	</li>
+            </ul>
+		</li>
+		<li>
+			<a href="#">Node 3</a>
+		</li>
+		<li>
+			<a href="#">Node 4</a>
+		</li>
+		<li>
+			<a href="#">Node 5</a>
+		</li>
+	</ul>
+</div>
+
+checkbox:
+<div id="demo-checkbox">
+	<ul>
+		<li>
+			<a href="#">Node 1</a>
+            <ul>
+            	<li>
+            		<a href="#">Node 1.1</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 1.2</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 1.3</a>
+            	</li>
+            </ul>
+		</li>
+		<li>
+			<a href="#">Node 2</a>
+            <ul>
+            	<li>
+            		<a href="#">Node 2.1</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.2</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.3</a>
+                    <ul>
+                    	<li>
+                    		<a href="#">Node 2.3.1</a>
+                    	</li>
+                    	<li>
+                    		<a href="#">Node 2.3.2</a>
+                    	</li>
+                    </ul>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.4</a>
+            	</li>
+            	<li>
+            		<a href="#">Node 2.5</a>
+            	</li>
+            </ul>
+		</li>
+		<li>
+			<a href="#">Node 3</a>
+		</li>
+		<li>
+			<a href="#">Node 4</a>
+		</li>
+		<li>
+			<a href="#">Node 5</a>
+		</li>
+	</ul>
+</div>
+
+<div id="t0" class="smartree"></div>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+<!--<script type="text/javascript" src="jquery-1.3.2.min.js"></script>-->
+<script type="text/javascript" src="smartree.js"></script>
+<script type="text/javascript">/*<![CDATA[*/
+    var nodes = [];
+    nodes[0] = {"pid":"0", "id":"1", "text":"Node 1"}
+    nodes[1] = {"pid":"0", "id":"2", "text":"Node 2"}
+    nodes[2] = {"pid":"0", "id":"3", "text":"Node 3"}
+    nodes[3] = {"pid":"0", "id":"4", "text":"Node 4"}
+    nodes[4] = {"pid":"0", "id":"5", "text":"Node 5"}
+    nodes[5] = {"pid":"0", "id":"6", "text":"Node 6"}
+    nodes[6] = {"pid":"0", "id":"7", "text":"Node 7"}
+    nodes[7] = {"pid":"0", "id":"8", "text":"Node 8"}
+    nodes[8] = {"pid":"0", "id":"9", "text":"Node 9"}
+    nodes[9] = {"pid":"0", "id":"10", "text":"Node 10"}
+    var tot=10240, cns=10;
+    for (i=10; i<tot; i++){
+        //tree.nodes[Math.floor(Math.random()*(tot/cns))+2 +"_"+ i] = 'text:节点 '+ i;
+        nodes[i] = {"pid":Math.floor(Math.random()*(tot/cns))+2, "id":i, "text":"Node "+i};
+    }
+    window.onload = function(){
+        new Smartree(document.getElementById("demo"));
+        var t0 = new Smartree(nodes, 0);
+        document.getElementById("t0").appendChild(t0.valueOf());
+    };
+//    $(function(){
+//        //$("#demo").smartree();
+//        $("#demo").smartree();
+//        $("#demo-checkbox").smartree({
+//            checkbox:{
+//                linkage:"none",
+//                defalutChecked:false
+//            }
+//        });
+//    });
+/*]]>*/</script>
+
+</body>
+</html>
