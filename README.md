@@ -35,6 +35,30 @@ var tree = new smartree({
 
 返回树的 DOM 树，可以 appendChild 到 DOM 中。
 
+### on(eventName, handler)
+
+* String eventName.
+* Function handler.
+
+### off(eventName, handler)
+
+* String eventName.
+* Function handler. [optional]
+
+## Events
+
+### expand
+
+```js
+tree.on("expand", function(node){
+  jQuery.get("/childnodes?pid="+node.id, function(childNodes){
+    tree.appendChild(id, childNodes);
+  });
+});
+```
+
+### fold
+
 ## support
 
 * IE6+, FF1+, Chrome1+, Safari3+, Opera8+
