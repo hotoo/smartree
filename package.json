@@ -1,6 +1,6 @@
 {
   "name": "smartree",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Smart Tree.",
   "homepage": "http://spmjs.io/docs/smartree/",
   "author": "闲耘 <hotoo.cn@gmail.com>",
@@ -18,6 +18,10 @@
   "license": "MIT",
   "spm": {
     "main": "smartree.js",
+    "output": [
+      "smartree.js",
+      "smartree.css"
+    ],
     "devDependencies": {
       "jquery": "1.7.2",
       "expect.js": "0.3.1"
